@@ -1,0 +1,21 @@
+services:
+  metrics-api:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      API_TOKEN: ${API_TOKEN:?Defina API_TOKEN no arquivo .env}
+      PRIVATE_PORTAL_USER: ${PRIVATE_PORTAL_USER:-admin}
+      PRIVATE_PORTAL_PASSWORD: ${PRIVATE_PORTAL_PASSWORD:?Defina PRIVATE_PORTAL_PASSWORD no arquivo .env}
+    ports:
+      - "${METRICS_API_PORT:-8000}:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${GOOGLE_SERVICE_ACCOUNT_FILE:-./secrets/google-service-account.json}:/run/secrets/google-service-account.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
